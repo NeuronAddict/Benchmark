@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  owasp-benchmark:
+    build:
+      context: VMs
+    ports:
+    - 127.0.0.1:8443:8443 # remove local address if you want expose application to local network. NEVER DO THIS IF YOU DON'T UNDERSTAND THE CONSEQUENCES.
+    command: ./runRemoteAccessibleBenchmark.sh # remove git pull because it can break previous results when restart container and the app change
