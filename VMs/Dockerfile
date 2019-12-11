@@ -1,26 +1,24 @@
 # This dockerfile builds a container that pulls down and runs the latest version of Benchmark
-FROM ubuntu:latest
+FROM openjdk:8-jdk
 MAINTAINER "Dave Wichers dave.wichers@owasp.org"
 
-RUN apt-get update && apt-get clean
-RUN apt-get install -q -y \
-     openjdk-8-jre-headless \
-     openjdk-8-jdk \
-     git \
-     maven \
-     wget \
-     iputils-ping \
-     && apt-get clean
+RUN apt-get update && apt-get clean \
+    && apt-get install -q -y \
+    git maven \
+    && apt-get autoremove -y \
+    && apt-get clean
 
-RUN mkdir /owasp
-WORKDIR /owasp
-RUN git clone https://github.com/OWASP/benchmark
+RUN mkdir /owasp \
+    && git clone https://github.com/OWASP/benchmark /owasp/benchmark
+
+RUN cd /owasp/benchmark \
+    && mvn clean package cargo:install \
+    && useradd -d /home/bench -m -s /bin/bash bench \
+    && echo bench:bench | chpasswd \
+    && chown -R bench /owasp/
+
 WORKDIR /owasp/benchmark
-RUN mvn clean package cargo:install
 
-RUN useradd -d /home/bench -m -s /bin/bash bench 
-RUN echo bench:bench | chpasswd
+USER bench
 
-RUN chown -R bench /owasp/
-ENV PATH /owasp/benchmark/:$PATH
-
+CMD ["mvn", "cargo:run", "-Pdeploy", "-Drunenv=remote"]
